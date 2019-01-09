@@ -3,21 +3,15 @@ package com.daledev.holidaypricescrapper.service;
 import com.daledev.holidaypricescrapper.constants.PriceStatus;
 import com.daledev.holidaypricescrapper.dao.HolidayQuoteDao;
 import com.daledev.holidaypricescrapper.dao.PriceStoreDao;
-import com.daledev.holidaypricescrapper.domain.Airport;
-import com.daledev.holidaypricescrapper.domain.HolidayQuote;
-import com.daledev.holidaypricescrapper.domain.PriceHistory;
-import com.daledev.holidaypricescrapper.domain.PriceSnapshot;
+import com.daledev.holidaypricescrapper.domain.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author dale.ellis
@@ -31,9 +25,6 @@ public class PriceRetrieverServiceImpl implements PriceRetrieverService {
     private MailService mailService;
     private PriceStoreDao priceStoreDao;
 
-    @Value("${searchUuid:defaultSearchUUI}")
-    private String searchUuid;
-
     /**
      * @param holidayQuoteDao
      * @param mailService
@@ -46,23 +37,36 @@ public class PriceRetrieverServiceImpl implements PriceRetrieverService {
     }
 
     @Override
-    public List<HolidayQuote> getPrices() {
-        try {
-            // TODO : Criteria should come from a request or saved request
-            Date startDate = new SimpleDateFormat("dd-MM-yyyy").parse("01-05-2019");
-            Date endDate = new SimpleDateFormat("dd-MM-yyyy").parse("30-06-2019");
-            Airport[] airports = new Airport[]{new Airport("STN")};
-            return holidayQuoteDao.getQuotes(startDate, endDate, airports, 7, "047406:HOTEL");
-        } catch (ParseException e) {
-            log.error("Failed to fetch quotes", e);
-            return new ArrayList<>();
+    public List<PriceCheckResult> priceChecks() throws IOException {
+        List<PriceCheckResult> priceStatus = new ArrayList<>();
+        for (PriceHistory priceHistory : priceStoreDao.getPriceHistories()) {
+            if (priceHistory.getSearchUUID() == null) {
+                priceHistory.setSearchUUID(UUID.randomUUID().toString());
+                log.debug("New search registered with UUID : {}", priceHistory.getSearchUUID());
+            }
+            priceStatus.add(priceCheck(priceHistory));
         }
+
+
+        return priceStatus;
     }
 
-    @Override
-    public PriceSnapshot getCurrentCheapestPrice() {
+    private PriceCheckResult priceCheck(PriceHistory priceHistory) throws IOException {
+        PriceSnapshot currentPrice = getCurrentCheapestPrice(priceHistory);
+        log.debug("History of prices retrieved, current cheapest price : {}", currentPrice);
+
+        PriceStatus priceStatus = priceHistory.getPriceChangeStatus(currentPrice);
+        log.debug("Price status : {}", priceStatus);
+
+        updatePriceHistory(priceHistory, currentPrice);
+        alertPriceStatus(priceHistory, priceStatus);
+
+        return new PriceCheckResult(priceHistory.getSearchUUID(), priceHistory.getCriterion().getDescription(), priceStatus, currentPrice.getPrice());
+    }
+
+    private PriceSnapshot getCurrentCheapestPrice(PriceHistory priceHistory) {
         List<HolidayQuote> cheapest = new ArrayList<>();
-        List<HolidayQuote> prices = getPrices();
+        List<HolidayQuote> prices = getPrices(priceHistory.getCriterion());
 
         for (HolidayQuote price : prices) {
             if (cheapest.isEmpty()) {
@@ -79,19 +83,8 @@ public class PriceRetrieverServiceImpl implements PriceRetrieverService {
         return new PriceSnapshot(cheapest);
     }
 
-    @Override
-    public PriceStatus priceCheck() throws IOException {
-        PriceHistory priceHistory = priceStoreDao.getPriceHistory(searchUuid);
-        PriceSnapshot currentPrice = getCurrentCheapestPrice();
-        log.debug("History of prices retrieved, current cheapest price : {}", currentPrice);
-
-        PriceStatus priceStatus = priceHistory.getPriceChangeStatus(currentPrice);
-        log.debug("Price status : {}", priceStatus);
-
-        updatePriceHistory(priceHistory, currentPrice);
-        alertPriceStatus(priceHistory, priceStatus);
-
-        return priceStatus;
+    private List<HolidayQuote> getPrices(HolidayCriterion holidayCriterion) {
+        return holidayQuoteDao.getQuotes(holidayCriterion);
     }
 
     private void updatePriceHistory(PriceHistory priceHistory, PriceSnapshot newPrice) throws IOException {
@@ -118,10 +111,17 @@ public class PriceRetrieverServiceImpl implements PriceRetrieverService {
 
     private void alertPriceDrop(PriceHistory priceHistory) {
         log.debug("Sending price dropped alert, cheapest recorded price : {}", priceHistory.isCurrentPriceCheapestCaptured());
-        mailService.sendEmail("dale.ellis@netcall.com", "Price Drop", "<b>Price Dropped : &#163;" + priceHistory.getLastRecordedPrice().getPrice() + "</b>, is cheapest ever captured : " + priceHistory.isCurrentPriceCheapestCaptured());
+        String htmlContent = "<h2>"+ priceHistory.getCriterion().getDescription() +"</h2><b>Price Dropped : &#163;" + priceHistory.getLastRecordedPrice().getPrice() + "</b>, is cheapest ever captured : " + priceHistory.isCurrentPriceCheapestCaptured();
+        sendEmail("Price Drop", htmlContent, priceHistory.getSubscribers());
     }
 
     private void alertPriceIncrease(PriceHistory priceHistory) {
-        mailService.sendEmail("dale.ellis@netcall.com", "Price Increase", "Price has increased. £" + priceHistory.getLastRecordedPrice().getPrice());
+        log.debug("Sending price increased alert");
+        String htmlContent = "<h2>"+ priceHistory.getCriterion().getDescription() +"</h2><b>Price has Increased : &#163;" + priceHistory.getLastRecordedPrice().getPrice() + "</b>";
+        sendEmail("Price Increase", htmlContent, priceHistory.getSubscribers());
+    }
+
+    private void sendEmail(String subject, String content, List<String> emailAddresses) {
+        emailAddresses.forEach(email -> mailService.sendEmail(email, subject, content));
     }
 }

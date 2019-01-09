@@ -13,7 +13,10 @@ import java.util.List;
  */
 public class PriceHistory {
     private String searchUUID;
+    private HolidayCriterion criterion = new HolidayCriterion();
     private List<PriceSnapshot> history = new ArrayList<>();
+    private List<String> subscribers = new ArrayList<>();
+    private boolean active = true;
 
     public String getSearchUUID() {
         return searchUUID;
@@ -23,12 +26,36 @@ public class PriceHistory {
         this.searchUUID = searchUUID;
     }
 
+    public HolidayCriterion getCriterion() {
+        return criterion;
+    }
+
+    public void setCriterion(HolidayCriterion criterion) {
+        this.criterion = criterion;
+    }
+
     public List<PriceSnapshot> getHistory() {
         return history;
     }
 
     public void setHistory(List<PriceSnapshot> history) {
         this.history = history;
+    }
+
+    public List<String> getSubscribers() {
+        return subscribers;
+    }
+
+    public void setSubscribers(List<String> subscribers) {
+        this.subscribers = subscribers;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     @JsonIgnore
@@ -41,6 +68,9 @@ public class PriceHistory {
      * @return
      */
     public PriceStatus getPriceChangeStatus(PriceSnapshot priceSnapshot) {
+        if (priceSnapshot.getCheapestQuotes().isEmpty()) {
+            return PriceStatus.NO_PRICE;
+        }
         HolidayQuote currentPrice = priceSnapshot.getCheapestQuotes().get(0);
 
         if (history.isEmpty()) {

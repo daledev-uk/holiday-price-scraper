@@ -1,11 +1,14 @@
 package com.daledev.holidaypricescrapper.function;
 
+import com.daledev.holidaypricescrapper.domain.PriceCheckResult;
 import com.daledev.holidaypricescrapper.service.PriceRetrieverService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -13,7 +16,7 @@ import java.util.function.Function;
  * @since 03/01/2019
  */
 @Component
-public class PriceCheckFunction implements Function<String, String> {
+public class PriceCheckFunction implements Function<String, List<PriceCheckResult>> {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
     private PriceRetrieverService priceRetrieverService;
 
@@ -25,12 +28,12 @@ public class PriceCheckFunction implements Function<String, String> {
     }
 
     @Override
-    public String apply(String searchId) {
+    public List<PriceCheckResult> apply(String searchId) {
         try {
-            return priceRetrieverService.priceCheck().name();
+            return priceRetrieverService.priceChecks();
         } catch (IOException e) {
             log.error("Function failed to check price", e);
-            return "FAILED";
+            return new ArrayList<>();
         }
     }
 }

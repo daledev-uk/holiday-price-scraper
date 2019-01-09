@@ -9,7 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -21,7 +22,25 @@ public class DynamoDBPriceStoreDao implements PriceStoreDao {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     @Override
-    public PriceHistory getPriceHistory(String searchUuid) throws IOException {
+    public List<PriceHistory> getPriceHistories() {
+        List<PriceHistory> histories = new ArrayList<>();
+
+        log.debug("Scanning For all PriceHistory items");
+        ItemCollection<ScanOutcome> scanResults = getHistoryTable().scan();
+        for (Item item : scanResults) {
+            log.debug("Item {} from results returned in results", item);
+            PriceHistory priceHistory = PriceHistoryMapper.mapToPriceHistory(item);
+            if (priceHistory != null) {
+                histories.add(priceHistory);
+            }
+        }
+
+        log.debug("Returning {} price histories", histories.size());
+        return histories;
+    }
+
+    @Override
+    public PriceHistory getPriceHistory(String searchUuid) {
         log.debug("Attempting to retrieve PriceHistory with ID : {}", searchUuid);
         Item persistedHistory = getHistoryTable().getItem(PriceHistoryMapper.PRIMARY_KEY_NAME, searchUuid);
 
@@ -33,34 +52,15 @@ public class DynamoDBPriceStoreDao implements PriceStoreDao {
     }
 
     @Override
-    public void storePrice(PriceHistory priceHistory) throws IOException {
-        if (priceHistory.getSearchUUID() == null) {
-            storeNewHistory(priceHistory);
-        } else {
-            updateStoredHistory(priceHistory);
-        }
-    }
-
-    private void storeNewHistory(PriceHistory priceHistory) {
+    public void storePrice(PriceHistory priceHistory) {
         String searchUUID = UUID.randomUUID().toString();
-        log.debug("Storing new history with ID : {}", searchUUID);
+        log.debug("Storing history with ID : {}", priceHistory.getSearchUUID());
 
         priceHistory.setSearchUUID(searchUUID);
         Item item = PriceHistoryMapper.mapFromPriceHistory(priceHistory);
         PutItemOutcome putItemOutcome = getHistoryTable().putItem(item);
 
         log.debug("Create response : {}", putItemOutcome);
-    }
-
-    private void updateStoredHistory(PriceHistory priceHistory) {
-        log.debug("Updating history for ID : {}", priceHistory.getSearchUUID());
-        Item item = PriceHistoryMapper.mapFromPriceHistory(priceHistory);
-
-        AttributeUpdate attributeUpdate = new AttributeUpdate(PriceHistoryMapper.HISTORY_ATTRIBUTE_NAME);
-        attributeUpdate.put(item.getJSON(PriceHistoryMapper.HISTORY_ATTRIBUTE_NAME));
-
-        UpdateItemOutcome updateItemOutcome = getHistoryTable().updateItem(PriceHistoryMapper.PRIMARY_KEY_NAME, priceHistory.getSearchUUID(), attributeUpdate);
-        log.debug("Update response : {}", updateItemOutcome);
     }
 
     private Table getHistoryTable() {

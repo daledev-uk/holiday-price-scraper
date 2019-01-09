@@ -8,5 +8,6 @@ public enum PriceStatus {
     INCREASED,
     DECREASED,
     SAME,
-    FIRST_PRICE
+    FIRST_PRICE,
+    NO_PRICE
 }

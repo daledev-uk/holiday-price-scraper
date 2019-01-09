@@ -1,9 +1,8 @@
 package com.daledev.holidaypricescrapper.dao;
 
-import com.daledev.holidaypricescrapper.domain.Airport;
+import com.daledev.holidaypricescrapper.domain.HolidayCriterion;
 import com.daledev.holidaypricescrapper.domain.HolidayQuote;
 
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -13,12 +12,8 @@ import java.util.List;
 public interface HolidayQuoteDao {
 
     /**
-     * @param startDate
-     * @param endDate
-     * @param airports
-     * @param duration
-     * @param accommodationRef
+     * @param holidayCriterion
      * @return
      */
-    List<HolidayQuote> getQuotes(Date startDate, Date endDate, Airport[] airports, int duration, String accommodationRef);
+    List<HolidayQuote> getQuotes(HolidayCriterion holidayCriterion);
 }

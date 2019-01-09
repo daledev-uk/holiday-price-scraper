@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +27,8 @@ public class PriceHistoryJsonMapper {
         objectMapper = new ObjectMapper();
         objectMapper.writer(new DefaultPrettyPrinter());
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
 
     /**
@@ -61,7 +64,7 @@ public class PriceHistoryJsonMapper {
         try {
             return objectMapper.readValue(json, PriceHistory.class);
         } catch (IOException e) {
-            log.error("Failed to create object from json", e);
+            log.error("Failed to create object from json [" + json + "]", e);
             return null;
         }
     }

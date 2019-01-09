@@ -1,8 +1,6 @@
 package com.daledev.holidaypricescrapper.service;
 
-import com.daledev.holidaypricescrapper.constants.PriceStatus;
-import com.daledev.holidaypricescrapper.domain.HolidayQuote;
-import com.daledev.holidaypricescrapper.domain.PriceSnapshot;
+import com.daledev.holidaypricescrapper.domain.PriceCheckResult;
 
 import java.io.IOException;
 import java.util.List;
@@ -14,17 +12,7 @@ import java.util.List;
 public interface PriceRetrieverService {
 
     /**
-     * @return
-     */
-    List<HolidayQuote> getPrices();
-
-    /**
-     * @return
-     */
-    PriceSnapshot getCurrentCheapestPrice();
-
-    /**
      *
      */
-    PriceStatus priceCheck() throws IOException;
+    List<PriceCheckResult> priceChecks() throws IOException;
 }

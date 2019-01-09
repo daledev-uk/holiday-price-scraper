@@ -5,6 +5,7 @@ import com.daledev.holidaypricescrapper.domain.Airport;
 import com.daledev.holidaypricescrapper.domain.HolidayQuote;
 import com.daledev.holidaypricescrapper.domain.PriceHistory;
 import com.daledev.holidaypricescrapper.domain.PriceSnapshot;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
@@ -18,6 +19,7 @@ import static org.junit.Assert.assertEquals;
  * @since 04/01/2019
  */
 @RunWith(Enclosed.class)
+@Ignore
 public class PriceHistoryMapperTest {
 
     public static class MapToPriceHistory {

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%-5p %c{1}:%L - %m%n"/>
+        </Console>
+    </Appenders>
+
+    <Loggers>
+        <!-- LOG everything at INFO level -->
+        <Root level="error">
+            <AppenderRef ref="Console"/>
+        </Root>
+
+        <Logger name="com.daledev" level="debug"></Logger>
+    </Loggers>
+
+</Configuration>

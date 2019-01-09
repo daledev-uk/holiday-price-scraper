@@ -2,6 +2,7 @@ package com.daledev.holidaypricescrapper.dao.firstchoice;
 
 import com.daledev.holidaypricescrapper.dao.HolidayQuoteDao;
 import com.daledev.holidaypricescrapper.domain.Airport;
+import com.daledev.holidaypricescrapper.domain.HolidayCriterion;
 import com.daledev.holidaypricescrapper.domain.HolidayQuote;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,11 +10,9 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestTemplate;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -32,7 +31,7 @@ public class FirstChoiceHolidayQuoteDao implements HolidayQuoteDao {
             "&units[]={accommodationRef}" +
             "&when={date}" +
             "&until=&flexibility=true&flexibleDays=3" +
-            "&noOfAdults=2&noOfChildren=1&childrenAge=2" +
+            "&noOfAdults={adults}&noOfChildren={children}&childrenAge={childrenAges}" +
             "&duration={duration}" +
             "&searchRequestType=ins" +
             "&searchType=search" +
@@ -48,23 +47,58 @@ public class FirstChoiceHolidayQuoteDao implements HolidayQuoteDao {
     }
 
     @Override
-    public List<HolidayQuote> getQuotes(Date startDate, Date endDate, Airport[] airports, int duration, String accommodationRef) {
-        log.debug("Retrieving quotes from first choice between dates [{} - {}] and from airports {} for the duration of {} nights at accommodation : {}", startDate, endDate, airports, duration, accommodationRef);
+    public List<HolidayQuote> getQuotes(HolidayCriterion holidayCriterion) {
+        log.debug("Retrieving quotes from first choice : {}", holidayCriterion);
         List<HolidayQuote> allPrices = new ArrayList<>();
-        String airportCodes = Stream.of(airports).map(Airport::getCode).collect(Collectors.joining("|"));
+        String airportCodes = Stream.of(holidayCriterion.getAirports()).map(Airport::getCode)
+                .collect(Collectors.joining("|"));
+        int adults = holidayCriterion.getNumberOfAdults();
+        int children = holidayCriterion.getChildrenAges().length;
+        String childrenAges = IntStream.of(holidayCriterion.getChildrenAges()).mapToObj(String::valueOf)
+                .collect(Collectors.joining("|"));
+        int duration = getDurationCode(holidayCriterion.getDuration());
 
-        duration = 7114; // TODO : 7 days = 7114, 2 weeks = 1413, 10-11 nights = 1014
-
-        for (String dateString : getStartOfMonthsInDateRange(startDate, endDate)) {
+        for (String dateString : getStartOfMonthsInDateRange(holidayCriterion.getStartDate(), holidayCriterion.getEndDate())) {
             RestTemplate restTemplate = new RestTemplate();
-            String responseHtml = restTemplate.getForEntity(SCRAPE_URL, String.class, airportCodes, accommodationRef, dateString, duration).getBody();
+            String responseHtml = restTemplate.getForEntity(SCRAPE_URL, String.class, airportCodes, holidayCriterion.getAccommodationRef(), dateString, adults, children, childrenAges, duration).getBody();
             allPrices.addAll(priceScraper.extract(responseHtml));
         }
 
         return allPrices;
     }
 
-    private List<String> getStartOfMonthsInDateRange(Date startDate, Date endDate) {
-        return Arrays.asList("01-05-2019", "01-06-2019");
+    private int getDurationCode(int days) {
+        if (days == 14) {
+            return 1413;
+        } else if (days == 10 || days == 11) {
+            return 1014;
+        } else {
+            return 7114; // 7 days
+        }
+
+    }
+
+    private Collection<String> getStartOfMonthsInDateRange(Date startDate, Date endDate) {
+        Set<String> startOfMonths = new LinkedHashSet<>();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(startDate);
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+
+        startOfMonths.add(getStartOfMonth(calendar));
+
+        while (calendar.getTime().before(endDate)) {
+            startOfMonths.add(getStartOfMonth(calendar));
+            calendar.add(Calendar.HOUR, 24);
+        }
+
+        return startOfMonths;
+    }
+
+    private String getStartOfMonth(Calendar calendar) {
+        Calendar startOfMonthCal = Calendar.getInstance();
+        startOfMonthCal.setTime(calendar.getTime());
+
+        startOfMonthCal.set(Calendar.DAY_OF_MONTH, 1);
+        return URL_DATE_FORMATTER.format(startOfMonthCal.getTime());
     }
 }
