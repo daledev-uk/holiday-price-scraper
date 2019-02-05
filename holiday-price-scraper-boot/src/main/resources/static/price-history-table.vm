@@ -1,0 +1,18 @@
+<h2>Price History</h2>
+
+<table>
+<tr style="font-weight: bold;">
+    <td width="150">From</td>
+    <td width="150">To</td>
+    <td width="150">Depart Date</td>
+    <td>Price</td>
+</tr>
+#foreach($history in $data.history)
+<tr>
+    <td>$date.format('dd/MM/yyyy HH:mm', $history.firstRetrievedDate)</td>
+    <td>$date.format('dd/MM/yyyy HH:mm', $history.lastRetrievedDate)</td>
+    <td>$date.format('dd/MM/yyyy (EEE)', $history.departDate)</td>
+    <td>&#163;$history.price</td>
+</tr>
+#end
+</table>

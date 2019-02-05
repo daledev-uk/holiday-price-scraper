@@ -56,8 +56,13 @@ public class PriceSnapshot implements Serializable {
     }
 
     @JsonIgnore
-    public double getPrice() {
-        return getCheapestQuotes().get(0).getPrice();
+    public Double getPrice() {
+        return cheapestQuotes.isEmpty() ? null : cheapestQuotes.get(0).getPrice();
+    }
+
+    @JsonIgnore
+    public Date getDepartDate() {
+        return cheapestQuotes.isEmpty() ? null : cheapestQuotes.get(0).getDate();
     }
 
     @Override

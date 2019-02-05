@@ -13,7 +13,7 @@ import java.util.Properties;
  * @since 01/01/2019
  */
 @Configuration
-public class MailConfig {
+public class GMailConfig {
     @Value("${mailserverUser}")
     private String mailServerUser;
     @Value("${mailserverPassword}")

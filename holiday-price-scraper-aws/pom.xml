@@ -24,6 +24,7 @@
         <spring-cloud-function.version>1.0.1.RELEASE</spring-cloud-function.version>
         <aws-lambda-events.version>2.0.2</aws-lambda-events.version>
         <aws-dynamo-db-version>1.11.475</aws-dynamo-db-version>
+        <aws-ses-version>1.11.480</aws-ses-version>
     </properties>
 
     <dependencies>
@@ -57,6 +58,12 @@
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-dynamodb</artifactId>
             <version>${aws-dynamo-db-version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-ses</artifactId>
+            <version>${aws-ses-version}</version>
         </dependency>
 
         <dependency>

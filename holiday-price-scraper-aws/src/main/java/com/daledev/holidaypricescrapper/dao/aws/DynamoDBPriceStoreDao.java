@@ -53,10 +53,8 @@ public class DynamoDBPriceStoreDao implements PriceStoreDao {
 
     @Override
     public void storePrice(PriceHistory priceHistory) {
-        String searchUUID = UUID.randomUUID().toString();
         log.debug("Storing history with ID : {}", priceHistory.getSearchUUID());
 
-        priceHistory.setSearchUUID(searchUUID);
         Item item = PriceHistoryMapper.mapFromPriceHistory(priceHistory);
         PutItemOutcome putItemOutcome = getHistoryTable().putItem(item);
 

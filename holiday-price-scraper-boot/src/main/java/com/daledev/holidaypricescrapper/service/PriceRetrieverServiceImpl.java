@@ -21,18 +21,18 @@ import java.util.UUID;
 public class PriceRetrieverServiceImpl implements PriceRetrieverService {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    private HolidayQuoteDao holidayQuoteDao;
     private MailService mailService;
+    private HolidayQuoteDao holidayQuoteDao;
     private PriceStoreDao priceStoreDao;
 
     /**
-     * @param holidayQuoteDao
      * @param mailService
+     * @param holidayQuoteDao
      * @param priceStoreDao
      */
-    public PriceRetrieverServiceImpl(HolidayQuoteDao holidayQuoteDao, MailService mailService, PriceStoreDao priceStoreDao) {
-        this.holidayQuoteDao = holidayQuoteDao;
+    public PriceRetrieverServiceImpl(MailService mailService, HolidayQuoteDao holidayQuoteDao, PriceStoreDao priceStoreDao) {
         this.mailService = mailService;
+        this.holidayQuoteDao = holidayQuoteDao;
         this.priceStoreDao = priceStoreDao;
     }
 
@@ -44,7 +44,9 @@ public class PriceRetrieverServiceImpl implements PriceRetrieverService {
                 priceHistory.setSearchUUID(UUID.randomUUID().toString());
                 log.debug("New search registered with UUID : {}", priceHistory.getSearchUUID());
             }
-            priceStatus.add(priceCheck(priceHistory));
+            if (priceHistory.isActive()) {
+                priceStatus.add(priceCheck(priceHistory));
+            }
         }
 
 
@@ -90,7 +92,10 @@ public class PriceRetrieverServiceImpl implements PriceRetrieverService {
     private void updatePriceHistory(PriceHistory priceHistory, PriceSnapshot newPrice) throws IOException {
         PriceStatus priceStatus = priceHistory.getPriceChangeStatus(newPrice);
 
-        if (priceStatus == PriceStatus.FIRST_PRICE) {
+        if (priceStatus == PriceStatus.NO_PRICE) {
+            log.debug("No price could be captured, maybe holiday package has been removed?");
+            return;
+        } else if (priceStatus == PriceStatus.FIRST_PRICE) {
             priceHistory.addSnapshot(newPrice);
         } else if (priceStatus == PriceStatus.SAME) {
             priceHistory.updateCurrentPriceTimeFrame();
@@ -103,25 +108,9 @@ public class PriceRetrieverServiceImpl implements PriceRetrieverService {
 
     private void alertPriceStatus(PriceHistory priceHistory, PriceStatus priceStatus) {
         if (priceStatus == PriceStatus.DECREASED) {
-            alertPriceDrop(priceHistory);
+            mailService.sendPriceDropMail(priceHistory);
         } else if (priceStatus == PriceStatus.INCREASED) {
-            alertPriceIncrease(priceHistory);
+            mailService.sendPriceIncreaseMail(priceHistory);
         }
-    }
-
-    private void alertPriceDrop(PriceHistory priceHistory) {
-        log.debug("Sending price dropped alert, cheapest recorded price : {}", priceHistory.isCurrentPriceCheapestCaptured());
-        String htmlContent = "<h2>"+ priceHistory.getCriterion().getDescription() +"</h2><b>Price Dropped : &#163;" + priceHistory.getLastRecordedPrice().getPrice() + "</b>, is cheapest ever captured : " + priceHistory.isCurrentPriceCheapestCaptured();
-        sendEmail("Price Drop", htmlContent, priceHistory.getSubscribers());
-    }
-
-    private void alertPriceIncrease(PriceHistory priceHistory) {
-        log.debug("Sending price increased alert");
-        String htmlContent = "<h2>"+ priceHistory.getCriterion().getDescription() +"</h2><b>Price has Increased : &#163;" + priceHistory.getLastRecordedPrice().getPrice() + "</b>";
-        sendEmail("Price Increase", htmlContent, priceHistory.getSubscribers());
-    }
-
-    private void sendEmail(String subject, String content, List<String> emailAddresses) {
-        emailAddresses.forEach(email -> mailService.sendEmail(email, subject, content));
     }
 }

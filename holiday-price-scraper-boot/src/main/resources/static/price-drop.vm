@@ -1,0 +1,33 @@
+<html>
+<head>
+
+    #parse ("static/style.vm")
+
+</head>
+<body>
+    <h2>$data.criterion.description</h2>
+
+    <table>
+        <tr>
+            <td>Price Dropped</td>
+            <td style="font-weight: bold;">&#163;$data.lastRecordedPrice.price</td>
+        </tr>
+        <tr>
+            <td>Cheapest ever captured?</td>
+            <td style="font-weight: bold;">
+                #if($data.currentPriceCheapestCaptured)
+                    Yes
+                #else
+                    No
+                #end
+            </td>
+        </tr>
+    </table>
+
+    #parse ("static/price-history-table.vm")
+    <p>
+        <img src="$reportImageSrc"/>
+    </p>
+
+</body>
+</html>

@@ -103,6 +103,17 @@ public class PriceHistory {
         return cheapest;
     }
 
+    @JsonIgnore
+    public PriceSnapshot getPriceWhenMostExpensive() {
+        PriceSnapshot mostExpensive = null;
+        for (PriceSnapshot priceSnapshot : history) {
+            if (mostExpensive == null || priceSnapshot.getPrice() > mostExpensive.getPrice()) {
+                mostExpensive = priceSnapshot;
+            }
+        }
+        return mostExpensive;
+    }
+
     public void updateCurrentPriceTimeFrame() {
         getLastRecordedPrice().setLastRetrievedDate(new Date());
     }

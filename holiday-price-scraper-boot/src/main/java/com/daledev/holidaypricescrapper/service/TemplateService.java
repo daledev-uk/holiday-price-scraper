@@ -6,17 +6,19 @@ import com.daledev.holidaypricescrapper.domain.PriceHistory;
  * @author dale.ellis
  * @since 27/01/2019
  */
-public interface MailService {
+public interface TemplateService {
 
     /**
      *
      * @param priceHistory
+     * @return
      */
-    void sendPriceDropMail(PriceHistory priceHistory);
+    String getPriceIncreaseContent(PriceHistory priceHistory);
 
     /**
      *
      * @param priceHistory
+     * @return
      */
-    void sendPriceIncreaseMail(PriceHistory priceHistory);
+    String getPriceDroppedContent(PriceHistory priceHistory);
 }
