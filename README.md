@@ -4,9 +4,10 @@
 The holiday price scraper app is a Spring Boot application which runs as a FAAS.
 The service scraps holiday prices for stored search criteria and alerts receipts to price changes.
 
-######_Example Email_
-
+---
+###### _Example Email_
 ![alt text](example-email.png "Example of email produced by application")
+---
 
 ### Supported websites
 
