@@ -1,9 +1,7 @@
 package com.daledev.holidaypricescrapper.dao;
 
 import com.daledev.holidaypricescrapper.domain.HolidayCriterion;
-import com.daledev.holidaypricescrapper.domain.HolidayQuote;
-
-import java.util.List;
+import com.daledev.holidaypricescrapper.domain.HolidayQuoteResults;
 
 /**
  * @author dale.ellis
@@ -15,5 +13,5 @@ public interface HolidayQuoteDao {
      * @param holidayCriterion
      * @return
      */
-    List<HolidayQuote> getQuotes(HolidayCriterion holidayCriterion);
+    HolidayQuoteResults getQuotes(HolidayCriterion holidayCriterion);
 }

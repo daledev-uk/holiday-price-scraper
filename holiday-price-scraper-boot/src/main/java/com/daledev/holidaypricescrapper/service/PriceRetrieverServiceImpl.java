@@ -68,9 +68,9 @@ public class PriceRetrieverServiceImpl implements PriceRetrieverService {
 
     private PriceSnapshot getCurrentCheapestPrice(PriceHistory priceHistory) {
         List<HolidayQuote> cheapest = new ArrayList<>();
-        List<HolidayQuote> prices = getPrices(priceHistory.getCriterion());
+        HolidayQuoteResults prices = getPrices(priceHistory.getCriterion());
 
-        for (HolidayQuote price : prices) {
+        for (HolidayQuote price : prices.getResults()) {
             if (cheapest.isEmpty()) {
                 cheapest.add(price);
             } else if (cheapest.get(0).getPrice() > price.getPrice()) {
@@ -85,7 +85,7 @@ public class PriceRetrieverServiceImpl implements PriceRetrieverService {
         return new PriceSnapshot(cheapest);
     }
 
-    private List<HolidayQuote> getPrices(HolidayCriterion holidayCriterion) {
+    private HolidayQuoteResults getPrices(HolidayCriterion holidayCriterion) {
         return holidayQuoteDao.getQuotes(holidayCriterion);
     }
 

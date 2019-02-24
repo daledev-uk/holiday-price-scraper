@@ -2,6 +2,7 @@ package com.daledev.holidaypricescrapper.scraper;
 
 import com.daledev.holidaypricescrapper.dao.firstchoice.FirstChoicePriceScraper;
 import com.daledev.holidaypricescrapper.domain.HolidayQuote;
+import com.daledev.holidaypricescrapper.domain.HolidayQuoteResults;
 import com.daledev.holidaypricescrapper.util.TestDataReader;
 import org.junit.Test;
 
@@ -22,10 +23,10 @@ public class FirstChoiceHolidayQuoteScraperTest {
         String html = TestDataReader.getFirstChoicePricesHtml();
 
         // When
-        List<HolidayQuote> results = priceScraper.extract(html);
+        HolidayQuoteResults results = priceScraper.extract(html);
 
         // Then
-        assertEquals(4, results.size());
+        assertEquals(4, results.getResults().size());
     }
 
     @Test
@@ -34,9 +35,9 @@ public class FirstChoiceHolidayQuoteScraperTest {
         String html = TestDataReader.getFirstChoiceNoPriceHtml();
 
         // When
-        List<HolidayQuote> results = priceScraper.extract(html);
+        HolidayQuoteResults results = priceScraper.extract(html);
 
         // Then
-        assertEquals(0, results.size());
+        assertEquals(0, results.getResults().size());
     }
 }
